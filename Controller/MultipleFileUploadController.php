@@ -2,6 +2,7 @@
 
 namespace Liplex\MultipleFileUploadBundle\Controller;
 
+use Doctrine\Common\Inflector\Inflector;
 use Liplex\MultipleFileUploadBundle\Repository\MultipleFileUploadRepository;
 use Sonata\MediaBundle\Entity\BaseMedia;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -56,17 +57,15 @@ class MultipleFileUploadController extends Controller
             throw new NotFoundHttpException('The entity you requested can not be found.');
         }
 
-        $mediaClass = $this->getParameter('liplex_multiple_file_upload.media_class');
+        $mediaClass = $this->container->getParameter('liplex_multiple_file_upload.media_class');
 
         /** @var BaseMedia $media */
         $media = new $mediaClass();
         $media->setBinaryContent($file);
         $media->setContext($mediaContext);
         $media->setProviderName($fieldConfiguration['provider']);
-
-        $mediaManager->save($media);
-
         $this->setMediaForField($entity, $field, $media);
+        $mediaManager->save($media);
 
         $repository->store($entity);
 
@@ -88,7 +87,7 @@ class MultipleFileUploadController extends Controller
      */
     private function getEntityConfigurationFromMapping($entityType)
     {
-        $mapping = $this->getParameter('liplex_multiple_file_upload.mapping');
+        $mapping = $this->container->getParameter('liplex_multiple_file_upload.mapping');
 
         foreach ($mapping as $entity) {
             $className = substr($entity['class'], strrpos($entity['class'], '\\') + 1);
@@ -141,7 +140,12 @@ class MultipleFileUploadController extends Controller
         ];
 
         if (in_array(get_class($currentField), $collectionClasses)) {
-            $entity->$getterFunction()->add($media);
+			$singularizedField = sprintf('add%s', ucfirst(Inflector::singularize($field)));
+        	if (method_exists($entity, $singularizedField)) {
+        		$entity->$singularizedField($media);
+			} else {
+            	$entity->$getterFunction()->add($media);
+			}
         } else {
             $setterFunction = 'set'.ucwords($field);
             $entity->$setterFunction($media);

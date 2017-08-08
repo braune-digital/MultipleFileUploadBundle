@@ -6,6 +6,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 /**
  * Custom type for multiple file upload with angular form.
@@ -17,34 +18,34 @@ class MultipleFileUploadType extends AbstractType
      *
      * @param OptionsResolver $resolver
      */
-    public function configureOptions(OptionsResolver $resolver)
+    public function setDefaultOptions(OptionsResolverInterface $resolver)
     {
-        $resolver->setDefaults([
+        $resolver->setDefaults(array(
             'read_only' => false,
             'single_upload' => false,
             'empty_data' => null,
             'allow_images' => false,
             'allow_files' => false,
-            'image_extensions' => [
+            'image_extensions' => array(
                 'jpg',
                 'png',
                 'jpeg',
-            ],
-            'file_extensions' => [
+			),
+            'file_extensions' => array(
                 'pdf',
                 'doc',
                 'docx',
                 'xls',
                 'xlsx',
-            ],
-        ]);
+			),
+		));
     }
 
     public function buildView(FormView $view, FormInterface $form, array $options)
     {
         parent::buildView($view, $form, $options);
 
-        $allowedExtensions = [];
+        $allowedExtensions = array();
         $allowedExtensionsFilter = '|';
         if ($options['allow_images']) {
             $allowedExtensions = array_merge($allowedExtensions, $options['image_extensions']);
